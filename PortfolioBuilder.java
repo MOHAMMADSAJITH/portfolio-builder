@@ -85,7 +85,6 @@ public class PortfolioBuilder extends JFrame {
                 "Vardhaman College of Engineering",
                 "Vasavi College of Engineering",
                 "VNR Vignana Jyothi Institute of Engineering and Technology"
-                "sr college"
         });
 
         java = new JCheckBox("Java");
@@ -139,11 +138,21 @@ public class PortfolioBuilder extends JFrame {
     JTextField numberField() {
         JTextField f = new JTextField(5);
         ((AbstractDocument) f.getDocument()).setDocumentFilter(new DocumentFilter() {
-            public void insertString(FilterBypass fb,int o,String t,AttributeSet a) throws BadLocationException {
-                if(t.matches("\\d+")) super.insertString(fb,o,t,a);
+
+            private boolean isValid(String text) {
+                return text.matches("\\d*");
             }
+
+            public void insertString(FilterBypass fb,int o,String t,AttributeSet a) throws BadLocationException {
+                String newText = fb.getDocument().getText(0, fb.getDocument().getLength());
+                newText = newText.substring(0,o) + t + newText.substring(o);
+                if(isValid(newText)) super.insertString(fb,o,t,a);
+            }
+
             public void replace(FilterBypass fb,int o,int l,String t,AttributeSet a) throws BadLocationException {
-                if(t.matches("\\d+")) super.replace(fb,o,l,t,a);
+                String current = fb.getDocument().getText(0, fb.getDocument().getLength());
+                String newText = current.substring(0,o) + t + current.substring(o+l);
+                if(isValid(newText)) super.replace(fb,o,l,t,a);
             }
         });
         return f;
@@ -164,16 +173,23 @@ public class PortfolioBuilder extends JFrame {
 
     void showPortfolio() {
 
+        if(firstName.getText().trim().isEmpty() || lastName.getText().trim().isEmpty()){
+            JOptionPane.showMessageDialog(this,"Please enter your name.");
+            return;
+        }
+
         if(genderBox.getSelectedIndex()==0 || degreeBox.getSelectedIndex()==0 || collegeBox.getSelectedIndex()==0){
             JOptionPane.showMessageDialog(this,"Please complete all dropdown selections.");
             return;
         }
 
-        ArrayList<String> skills=new ArrayList<>();
-        if(java.isSelected()) skills.add("Java");
-        if(python.isSelected()) skills.add("Python");
-        if(web.isSelected()) skills.add("Web Development");
-        if(ai.isSelected()) skills.add("Artificial Intelligence / Machine Learning");
+        ArrayList<String> skillsList=new ArrayList<>();
+        if(java.isSelected()) skillsList.add("Java");
+        if(python.isSelected()) skillsList.add("Python");
+        if(web.isSelected()) skillsList.add("Web Development");
+        if(ai.isSelected()) skillsList.add("Artificial Intelligence / Machine Learning");
+
+        if(skillsList.isEmpty()) skillsList.add("No skills selected");
 
         JFrame view=new JFrame("Professional Portfolio");
         view.setSize(750,850);
@@ -187,14 +203,12 @@ public class PortfolioBuilder extends JFrame {
         cardPanel.setBackground(Color.WHITE);
         cardPanel.setBorder(BorderFactory.createEmptyBorder(30,40,30,40));
 
-        // NAME
         JLabel name=new JLabel(firstName.getText()+" "+lastName.getText());
         name.setFont(new Font("Segoe UI",Font.BOLD,32));
         name.setAlignmentX(Component.CENTER_ALIGNMENT);
         cardPanel.add(name);
         cardPanel.add(Box.createVerticalStrut(20));
 
-        // PHOTO
         if(photoFile!=null){
             Image img=new ImageIcon(photoFile.getAbsolutePath())
                     .getImage().getScaledInstance(130,130,Image.SCALE_SMOOTH);
@@ -213,7 +227,7 @@ public class PortfolioBuilder extends JFrame {
                 "Institution: "+collegeBox.getSelectedItem()));
 
         cardPanel.add(section("Technical Skills",
-                String.join(", ",skills)));
+                String.join(", ",skillsList)));
 
         cardPanel.add(section("Contact Information",
                 "Email: "+email.getText(),
@@ -248,6 +262,75 @@ public class PortfolioBuilder extends JFrame {
     }
 
     public static void main(String[] args) {
-        new PortfolioBuilder();
+        SwingUtilities.invokeLater(LoginPage::new);
+    }
+}
+
+class LoginPage extends JFrame {
+
+    JTextField username;
+    JPasswordField password;
+
+    private final String USER = "admin";
+    private final String PASS = "1234";
+
+    public LoginPage() {
+
+        setTitle("Login");
+        setSize(400,300);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(new Color(235,238,242));
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(10,10,10,10);
+        c.fill = GridBagConstraints.HORIZONTAL;
+
+        username = new JTextField(15);
+        password = new JPasswordField(15);
+
+        JLabel title = new JLabel("Student Login");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        title.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JButton loginBtn = new JButton("Login");
+
+        c.gridx = 0; c.gridy = 0; c.gridwidth = 2;
+        panel.add(title, c);
+
+        c.gridwidth = 1;
+        c.gridy++;
+        panel.add(new JLabel("Username:"), c);
+
+        c.gridx = 1;
+        panel.add(username, c);
+
+        c.gridx = 0; c.gridy++;
+        panel.add(new JLabel("Password:"), c);
+
+        c.gridx = 1;
+        panel.add(password, c);
+
+        c.gridx = 0; c.gridy++; c.gridwidth = 2;
+        panel.add(loginBtn, c);
+
+        loginBtn.addActionListener(e -> login());
+
+        add(panel);
+        setVisible(true);
+    }
+
+    void login() {
+        String user = username.getText();
+        String pass = new String(password.getPassword());
+
+        if(user.equals(USER) && pass.equals(PASS)) {
+            dispose();
+            new PortfolioBuilder();
+        } else {
+            JOptionPane.showMessageDialog(this,"Invalid Username or Password");
+        }
     }
 }
