@@ -85,6 +85,7 @@ public class PortfolioBuilder extends JFrame {
                 "Vardhaman College of Engineering",
                 "Vasavi College of Engineering",
                 "VNR Vignana Jyothi Institute of Engineering and Technology"
+                "sr college"
         });
 
         java = new JCheckBox("Java");
