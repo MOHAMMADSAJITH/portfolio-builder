@@ -8,7 +8,7 @@ public class LoginPage extends JFrame {
 
     public LoginPage() {
         setTitle("Login Page");
-        setSize(300, 200);
+        setSize(300, 180);
         setLayout(new GridLayout(3, 2, 10, 10));
 
         add(new JLabel("Username:"));
@@ -20,7 +20,7 @@ public class LoginPage extends JFrame {
         add(passwordField);
 
         JButton loginBtn = new JButton("Login");
-        add(new JLabel()); // empty space
+        add(new JLabel());
         add(loginBtn);
 
         loginBtn.addActionListener(e -> {
@@ -28,10 +28,10 @@ public class LoginPage extends JFrame {
             String pass = new String(passwordField.getPassword());
 
             if (user.equals("admin") && pass.equals("1234")) {
-                new PortfolioBuilder(); // open main app
-                dispose(); // close login window
+                new PortfolioBuilder();
+                dispose();
             } else {
-                JOptionPane.showMessageDialog(this, "Invalid Username or Password!");
+                JOptionPane.showMessageDialog(this, "Invalid Login!");
             }
         });
 
