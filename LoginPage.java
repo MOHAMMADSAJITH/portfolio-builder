@@ -7,22 +7,58 @@ public class LoginPage extends JFrame {
     JPasswordField passwordField;
 
     public LoginPage() {
-        setTitle("Login Page");
-        setSize(300, 180);
-        setLayout(new GridLayout(3, 2, 10, 10));
 
-        add(new JLabel("Username:"));
-        usernameField = new JTextField();
-        add(usernameField);
+        setTitle("Login");
+        setExtendedState(JFrame.MAXIMIZED_BOTH); // full screen
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        add(new JLabel("Password:"));
-        passwordField = new JPasswordField();
-        add(passwordField);
+        Color bg = new Color(235,238,242);
+        Color card = Color.WHITE;
+
+        JPanel root = new JPanel(new GridBagLayout());
+        root.setBackground(bg);
+
+        JPanel loginCard = new JPanel(new GridBagLayout());
+        loginCard.setBackground(card);
+        loginCard.setPreferredSize(new Dimension(350, 220));
+        loginCard.setBorder(BorderFactory.createEmptyBorder(25,25,25,25));
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(10,10,10,10);
+        c.fill = GridBagConstraints.HORIZONTAL;
+
+        JLabel title = new JLabel("Login");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        title.setHorizontalAlignment(JLabel.CENTER);
+
+        usernameField = new JTextField(15);
+        passwordField = new JPasswordField(15);
 
         JButton loginBtn = new JButton("Login");
-        add(new JLabel());
-        add(loginBtn);
 
+        int y = 0;
+
+        c.gridx=0; c.gridy=y++; c.gridwidth=2;
+        loginCard.add(title, c);
+
+        c.gridwidth=1;
+
+        c.gridx=0; c.gridy=y;
+        loginCard.add(new JLabel("Username:"), c);
+        c.gridx=1;
+        loginCard.add(usernameField, c);
+        y++;
+
+        c.gridx=0; c.gridy=y;
+        loginCard.add(new JLabel("Password:"), c);
+        c.gridx=1;
+        loginCard.add(passwordField, c);
+        y++;
+
+        c.gridx=0; c.gridy=y; c.gridwidth=2;
+        loginCard.add(loginBtn, c);
+
+        // login logic
         loginBtn.addActionListener(e -> {
             String user = usernameField.getText();
             String pass = new String(passwordField.getPassword());
@@ -35,12 +71,13 @@ public class LoginPage extends JFrame {
             }
         });
 
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+        root.add(loginCard); // center it
+        add(root);
+
         setVisible(true);
     }
 
     public static void main(String[] args) {
-        new LoginPage();
+        SwingUtilities.invokeLater(LoginPage::new);
     }
 }
