@@ -31,8 +31,8 @@ public class LoginPage extends JFrame {
         title.setFont(new Font("Segoe UI", Font.BOLD, 22));
         title.setHorizontalAlignment(JLabel.CENTER);
 
-        usernameField = new JTextField(15);
-        passwordField = new JPasswordField(15);
+        usernameField = new JTextField(150);
+        passwordField = new JPasswordField(150);
 
         JButton loginBtn = new JButton("Login");
 
