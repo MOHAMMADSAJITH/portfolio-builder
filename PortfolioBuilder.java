@@ -1,189 +1,172 @@
 import javax.swing.*;
-import javax.swing.text.*;
 import java.awt.*;
-import java.io.*;
-import java.util.ArrayList;
-
-// ✅ Correct PDF imports (no conflict)
-import com.itextpdf.text.Document;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.pdf.PdfWriter;
+import java.io.File;
+import java.io.FileWriter;
 
 public class PortfolioBuilder extends JFrame {
 
-    JTextField firstName, lastName, age, email;
-    JTextArea hobbies;
-    JCheckBox java, python;
-    File photoFile;
+    JTextField firstName, lastName, phone, email;
+    JTextArea education, skills, projects, experience;
 
-    Color bg = new Color(30,32,40);
+    JLabel imageLabel, pImage, pName, pContact;
+    JTextArea leftArea, rightArea;
+
+    ImageIcon selectedImage;
 
     public PortfolioBuilder() {
 
         setTitle("Portfolio Builder");
-        setSize(700,700);
-        setLocationRelativeTo(null);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        JPanel form = new JPanel(new GridBagLayout());
-        form.setBackground(Color.WHITE);
+        // ================= LEFT INPUT =================
+        JPanel form = new JPanel(new GridLayout(10,2,10,10));
 
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(8,8,8,8);
-        c.fill = GridBagConstraints.HORIZONTAL;
+        firstName = new JTextField();
+        lastName = new JTextField();
+        phone = new JTextField();
+        email = new JTextField();
 
-        firstName = new JTextField(15);
-        lastName = new JTextField(15);
-        age = new JTextField(5);
-        email = new JTextField(15);
-        hobbies = new JTextArea(3,20);
+        education = new JTextArea(2,20);
+        skills = new JTextArea(2,20);
+        projects = new JTextArea(2,20);
+        experience = new JTextArea(2,20);
 
-        java = new JCheckBox("Java");
-        python = new JCheckBox("Python");
+        JButton uploadBtn = new JButton("Upload Photo");
+        imageLabel = new JLabel("No Image");
 
-        int y=0;
-        addRow(form,c,y++,"First Name",firstName);
-        addRow(form,c,y++,"Last Name",lastName);
-        addRow(form,c,y++,"Age",age);
-        addRow(form,c,y++,"Email",email);
-        addRow(form,c,y++,"Hobbies",new JScrollPane(hobbies));
+        uploadBtn.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                File file = chooser.getSelectedFile();
 
-        JPanel skills = new JPanel();
-        skills.add(java);
-        skills.add(python);
-        addRow(form,c,y++,"Skills",skills);
+                selectedImage = new ImageIcon(
+                        new ImageIcon(file.getAbsolutePath())
+                                .getImage()
+                                .getScaledInstance(200,200,Image.SCALE_SMOOTH)
+                );
 
-        JButton upload = new JButton("Upload Photo");
-        upload.addActionListener(e -> {
-            JFileChooser j = new JFileChooser();
-            if(j.showOpenDialog(this)==JFileChooser.APPROVE_OPTION){
-                photoFile = j.getSelectedFile();
+                imageLabel.setIcon(selectedImage);
+                imageLabel.setText("");
+                pImage.setIcon(selectedImage); // preview also
             }
         });
 
-        JButton generate = new JButton("Generate Portfolio");
-        generate.addActionListener(e -> showPortfolio());
+        form.add(new JLabel("First Name")); form.add(firstName);
+        form.add(new JLabel("Last Name")); form.add(lastName);
+        form.add(new JLabel("Phone")); form.add(phone);
+        form.add(new JLabel("Email")); form.add(email);
 
-        c.gridx=0;c.gridy=y;form.add(upload,c);
-        c.gridx=1;form.add(generate,c);
+        form.add(new JLabel("Education")); form.add(new JScrollPane(education));
+        form.add(new JLabel("Skills")); form.add(new JScrollPane(skills));
+        form.add(new JLabel("Projects")); form.add(new JScrollPane(projects));
+        form.add(new JLabel("Experience")); form.add(new JScrollPane(experience));
 
-        add(new JScrollPane(form));
+        form.add(uploadBtn); form.add(imageLabel);
+
+        // ================= RIGHT PREVIEW =================
+        JPanel preview = new JPanel(new BorderLayout());
+
+        // HEADER
+        JPanel header = new JPanel(new GridLayout(1,2));
+
+        pImage = new JLabel();
+        pImage.setHorizontalAlignment(JLabel.CENTER);
+
+        JPanel blueBox = new JPanel();
+        blueBox.setBackground(new Color(50,100,180));
+        blueBox.setLayout(new BoxLayout(blueBox, BoxLayout.Y_AXIS));
+
+        pName = new JLabel("Your Name");
+        pName.setForeground(Color.WHITE);
+        pName.setFont(new Font("Segoe UI", Font.BOLD, 26));
+
+        pContact = new JLabel("Contact Info");
+        pContact.setForeground(Color.WHITE);
+
+        blueBox.add(Box.createVerticalStrut(30));
+        blueBox.add(pName);
+        blueBox.add(Box.createVerticalStrut(10));
+        blueBox.add(pContact);
+
+        header.add(pImage);
+        header.add(blueBox);
+
+        // BODY
+        JPanel body = new JPanel(new GridLayout(1,2));
+
+        leftArea = new JTextArea();
+        leftArea.setEditable(false);
+
+        rightArea = new JTextArea();
+        rightArea.setEditable(false);
+
+        body.add(new JScrollPane(leftArea));
+        body.add(new JScrollPane(rightArea));
+
+        preview.add(header, BorderLayout.NORTH);
+        preview.add(body, BorderLayout.CENTER);
+
+        // ================= BUTTONS =================
+        JButton previewBtn = new JButton("Generate Preview");
+        JButton saveBtn = new JButton("Save as Word");
+
+        JPanel top = new JPanel();
+        top.add(previewBtn);
+        top.add(saveBtn);
+
+        // ================= SPLIT =================
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+                new JScrollPane(form), preview);
+        split.setDividerLocation(450);
+
+        add(top, BorderLayout.NORTH);
+        add(split, BorderLayout.CENTER);
+
+        // ================= ACTION =================
+        previewBtn.addActionListener(e -> {
+            pName.setText(firstName.getText() + " " + lastName.getText());
+            pContact.setText(email.getText() + " | " + phone.getText());
+
+            leftArea.setText(
+                    "EDUCATION\n" + education.getText() +
+                    "\n\nSKILLS\n" + skills.getText()
+            );
+
+            rightArea.setText(
+                    "PROJECTS\n" + projects.getText() +
+                    "\n\nEXPERIENCE\n" + experience.getText()
+            );
+        });
+
+        saveBtn.addActionListener(e -> saveDoc());
+
         setVisible(true);
     }
 
-    void addRow(JPanel p,GridBagConstraints c,int y,String label,Component comp){
-        c.gridx=0;c.gridy=y;
-        p.add(new JLabel(label),c);
-        c.gridx=1;
-        p.add(comp,c);
-    }
+    void saveDoc() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setSelectedFile(new File("Portfolio.doc"));
 
-    void showPortfolio(){
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
 
-        if(firstName.getText().isEmpty()){
-            JOptionPane.showMessageDialog(this,"Enter Name");
-            return;
-        }
+        try {
+            FileWriter fw = new FileWriter(chooser.getSelectedFile());
 
-        ArrayList<String> skillsList=new ArrayList<>();
-        if(java.isSelected()) skillsList.add("Java");
-        if(python.isSelected()) skillsList.add("Python");
+            fw.write(pName.getText() + "\n");
+            fw.write(pContact.getText() + "\n\n");
+            fw.write(leftArea.getText() + "\n\n");
+            fw.write(rightArea.getText());
 
-        JFrame view=new JFrame("Portfolio");
-        view.setSize(900,700);
-        view.setLocationRelativeTo(null);
+            fw.close();
 
-        JPanel root=new JPanel(new GridBagLayout());
-        root.setBackground(bg);
-
-        JPanel card=new JPanel();
-        card.setLayout(new BoxLayout(card,BoxLayout.Y_AXIS));
-        card.setBackground(Color.WHITE);
-        card.setPreferredSize(new Dimension(500,600));
-        card.setBorder(BorderFactory.createEmptyBorder(30,40,30,40));
-
-        // ✅ FIXED IMAGE (no conflict)
-        if(photoFile!=null){
-            Image img=new ImageIcon(photoFile.getAbsolutePath())
-                    .getImage().getScaledInstance(120,120,Image.SCALE_SMOOTH);
-            JLabel pic=new JLabel(new ImageIcon(img));
-            pic.setAlignmentX(Component.CENTER_ALIGNMENT);
-            card.add(pic);
-        }
-
-        // ✅ FIXED FONT
-        JLabel name=new JLabel(firstName.getText()+" "+lastName.getText());
-        name.setFont(new Font("Segoe UI",Font.BOLD,28));
-        name.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        card.add(name);
-        card.add(Box.createVerticalStrut(20));
-
-        card.add(section("👤 Info",
-                "Age: "+age.getText(),
-                "Email: "+email.getText()));
-
-        card.add(section("💻 Skills",
-                String.join(", ",skillsList)));
-
-        card.add(section("🎯 Hobbies",
-                hobbies.getText()));
-
-        JButton pdfBtn=new JButton("Export PDF");
-        pdfBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        pdfBtn.addActionListener(e -> generatePDF(skillsList));
-
-        card.add(Box.createVerticalStrut(20));
-        card.agitdd(pdfBtn);
-
-        root.add(card);
-        view.add(root);
-        view.setVisible(true);
-    }
-
-    JPanel section(String title,String... lines){
-
-        JPanel p=new JPanel();
-        p.setLayout(new BoxLayout(p,BoxLayout.Y_AXIS));
-        p.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel t=new JLabel(title);
-        t.setFont(new Font("Segoe UI",Font.BOLD,18)); // ✅ FIXED
-        t.setForeground(new Color(0,120,215));
-
-        p.add(t);
-
-        for(String s:lines){
-            p.add(new JLabel(s));
-        }
-
-        p.add(Box.createVerticalStrut(10));
-        return p;
-    }
-
-    void generatePDF(ArrayList<String> skillsList){
-        try{
-            Document doc=new Document();
-            PdfWriter.getInstance(doc,new FileOutputStream("portfolio.pdf"));
-
-            doc.open();
-
-            doc.add(new Paragraph("PORTFOLIO\n\n"));
-            doc.add(new Paragraph("Name: "+firstName.getText()+" "+lastName.getText()));
-            doc.add(new Paragraph("Email: "+email.getText()));
-            doc.add(new Paragraph("Skills: "+String.join(", ",skillsList)));
-            doc.add(new Paragraph("Hobbies: "+hobbies.getText()));
-
-            doc.close();
-
-            JOptionPane.showMessageDialog(this,"PDF Created!");
-
-        }catch(Exception e){
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Saved Successfully!");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error!");
         }
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         new PortfolioBuilder();
     }
 }
