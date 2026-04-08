@@ -23,6 +23,7 @@ public class PortfolioBuilder extends JFrame {
     ArrayList<JTextField> educationFields = new ArrayList<>();
     ArrayList<JTextField> projectFields = new ArrayList<>();
     ArrayList<JTextField> skillsFields = new ArrayList<>();
+ArrayList<JTextField> certificationFields = new ArrayList<>();
 
     JPanel form;
     GridBagConstraints c;
@@ -31,6 +32,7 @@ public class PortfolioBuilder extends JFrame {
     JPanel educationPanel = new JPanel();
     JPanel projectPanel = new JPanel();
     JPanel skillsPanel = new JPanel();
+    JPanel certificationPanel = new JPanel();
 
     public PortfolioBuilder() {
 
@@ -111,6 +113,19 @@ qualificationBox.setSelectedIndex(-1);
         addRow("Skills", addSkill);
         addRow("", skillsPanel);
 
+        // CERTIFICATIONS
+certificationPanel.setLayout(new BoxLayout(certificationPanel, BoxLayout.Y_AXIS));
+
+JButton addCert = new JButton("+ Add Certification");
+addCert.addActionListener(e -> {
+    JTextField f = new JTextField(15);
+    certificationFields.add(f);
+    certificationPanel.add(f);
+    certificationPanel.revalidate();
+});
+
+addRow("Certifications", addCert);
+addRow("", certificationPanel);
         // PHOTO
         JButton uploadBtn = new JButton("Upload Photo");
         photoLabel = new JLabel("No file");
@@ -256,6 +271,15 @@ doc.add(links);
                     if(!f.getText().isEmpty())
                         doc.add(new Paragraph("• "+f.getText(), normalFont));
                 }
+doc.add(new Paragraph("\n----------------------------------------\n"));
+
+// CERTIFICATIONS
+doc.add(new Paragraph("CERTIFICATIONS", headingFont));
+for(JTextField f : certificationFields){
+    if(!f.getText().isEmpty())
+        doc.add(new Paragraph("• " + f.getText(), normalFont));
+}
+
 
                 doc.close();
 
