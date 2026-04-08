@@ -5,7 +5,7 @@ import java.awt.Insets;
 import java.awt.Color;
 import java.io.File;
 import java.awt.Component;
-
+import com.itextpdf.text.Anchor;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 
@@ -191,6 +191,30 @@ qualificationBox.setSelectedIndex(-1);
                 Paragraph contact = new Paragraph("+91 "+phone.getText()+" | "+email.getText(), normalFont);
                 contact.setAlignment(Element.ALIGN_CENTER);
                 doc.add(contact);
+         // LinkedIn
+String link = linkedin.getText().trim();
+if(!link.startsWith("http")){
+    link = "https://" + link;
+}
+Anchor linkedinLink = new Anchor("LinkedIn : " + link, normalFont);
+linkedinLink.setReference(link);
+
+// GitHub
+String git = github.getText().trim();
+if(!git.startsWith("http")){
+    git = "https://" + git;
+}
+Anchor githubLink = new Anchor("GitHub : " + git, normalFont);
+githubLink.setReference(git);
+
+// Combine
+Paragraph links = new Paragraph();
+links.setAlignment(Element.ALIGN_CENTER);
+links.add(linkedinLink);
+links.add(Chunk.NEWLINE); // moves GitHub to next line
+links.add(githubLink);
+
+doc.add(links);
 
                 // ADDRESS
                 Paragraph addr = new Paragraph(location.getText(), normalFont);
