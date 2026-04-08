@@ -1,193 +1,249 @@
 import javax.swing.*;
-import javax.swing.text.*;
-import java.awt.*;
-import java.io.*;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import java.awt.Color;
+import java.io.File;
+import java.awt.Component;
+
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 
-// ✅ Correct PDF imports (no conflict)
-import com.itextpdf.text.Document;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
 
 public class PortfolioBuilder extends JFrame {
 
-    JTextField firstName, lastName, age, email;
-    JTextArea hobbies;
-    JCheckBox java, python;
+    JTextField firstName, lastName, age, linkedin, github, email, phone, location;
+    JComboBox<String> genderBox, qualificationBox;
+
+    JLabel photoLabel;
     File photoFile;
 
-    Color bg = new Color(30,32,40);
+    ArrayList<JTextField> educationFields = new ArrayList<>();
+    ArrayList<JTextField> projectFields = new ArrayList<>();
+    ArrayList<JTextField> skillsFields = new ArrayList<>();
+
+    JPanel form;
+    GridBagConstraints c;
+    int y = 0;
+
+    JPanel educationPanel = new JPanel();
+    JPanel projectPanel = new JPanel();
+    JPanel skillsPanel = new JPanel();
 
     public PortfolioBuilder() {
 
-        setTitle("Portfolio Builder");
-        setSize(700,700);
-        setLocationRelativeTo(null);
+        setTitle("Student Portfolio Generator");
+        setSize(700,600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
         JPanel outer = new JPanel(new GridBagLayout());
         outer.setBackground(Color.WHITE);
 
-        JPanel form = new JPanel(new GridBagLayout());
+        form = new JPanel(new GridBagLayout());
         form.setBackground(Color.WHITE);
+        form.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
 
-        GridBagConstraints c = new GridBagConstraints();
+        c = new GridBagConstraints();
         c.insets = new Insets(8,8,8,8);
         c.fill = GridBagConstraints.HORIZONTAL;
 
         firstName = new JTextField(15);
         lastName = new JTextField(15);
         age = new JTextField(5);
+        phone = new JTextField(15);
         email = new JTextField(15);
-        hobbies = new JTextArea(3,20);
+        location = new JTextField(15);
+        linkedin = new JTextField(15);
+        github = new JTextField(15);
 
-        java = new JCheckBox("Java");
-        python = new JCheckBox("Python");
+        genderBox = new JComboBox<>(new String[]{"Male","Female","Other"});
+qualificationBox = new JComboBox<>(new String[]{"Diploma","Bachelor","Master","PhD"});
+genderBox.setSelectedIndex(-1);
+qualificationBox.setSelectedIndex(-1);
 
-        int y=0;
-        addRow(form,c,y++,"First Name",firstName);
-        addRow(form,c,y++,"Last Name",lastName);
-        addRow(form,c,y++,"Age",age);
-        addRow(form,c,y++,"Email",email);
-        addRow(form,c,y++,"Hobbies",new JScrollPane(hobbies));
+        addRow("First Name", firstName);
+        addRow("Last Name", lastName);
+        addRow("Gender", genderBox);
+        addRow("Age", age);
+        addRow("Phone", phone);
+        addRow("Location", location);
+        addRow("Qualification", qualificationBox);
+        addRow("Email", email);
+        addRow("LinkedIn", linkedin);
+        addRow("GitHub", github);
 
-        JPanel skills = new JPanel();
-        skills.add(java);
-        skills.add(python);
-        addRow(form,c,y++,"Skills",skills);
+        // EDUCATION
+        educationPanel.setLayout(new BoxLayout(educationPanel, BoxLayout.Y_AXIS));
+        JButton addEdu = new JButton("+ Add Education");
+        addEdu.addActionListener(e -> {
+            JTextField f = new JTextField(15);
+            educationFields.add(f);
+            educationPanel.add(f);
+            educationPanel.revalidate();
+        });
+        addRow("Education", addEdu);
+        addRow("", educationPanel);
 
-        JButton upload = new JButton("Upload Photo");
-        upload.addActionListener(e -> {
-            JFileChooser j = new JFileChooser();
-            if(j.showOpenDialog(this)==JFileChooser.APPROVE_OPTION){
-                photoFile = j.getSelectedFile();
+        // PROJECTS
+        projectPanel.setLayout(new BoxLayout(projectPanel, BoxLayout.Y_AXIS));
+        JButton addProj = new JButton("+ Add Project");
+        addProj.addActionListener(e -> {
+            JTextField f = new JTextField(15);
+            projectFields.add(f);
+            projectPanel.add(f);
+            projectPanel.revalidate();
+        });
+        addRow("Projects", addProj);
+        addRow("", projectPanel);
+
+        // SKILLS
+        skillsPanel.setLayout(new BoxLayout(skillsPanel, BoxLayout.Y_AXIS));
+        JButton addSkill = new JButton("+ Add Skill");
+        addSkill.addActionListener(e -> {
+            JTextField f = new JTextField(15);
+            skillsFields.add(f);
+            skillsPanel.add(f);
+            skillsPanel.revalidate();
+        });
+        addRow("Skills", addSkill);
+        addRow("", skillsPanel);
+
+        // PHOTO
+        JButton uploadBtn = new JButton("Upload Photo");
+        photoLabel = new JLabel("No file");
+
+        uploadBtn.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            if(chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION){
+                photoFile = chooser.getSelectedFile();
+                photoLabel.setText(photoFile.getName());
             }
         });
 
-        JButton generate = new JButton("Generate Portfolio");
-        generate.addActionListener(e -> showPortfolio());
+        addRow("Photo", uploadBtn);
+        addRow("", photoLabel);
 
-        c.gridx=0;c.gridy=y;form.add(upload,c);
-        c.gridx=1;form.add(generate,c);
+        // GENERATE BUTTON
+        JButton generate = new JButton("Generate PDF");
+        generate.addActionListener(e -> generatePDF());
 
-        add(new JScrollPane(form));
+        c.gridx = 0;
+        c.gridy = y;
+        c.gridwidth = 2;
+        form.add(generate, c);
+
+        outer.add(form);
+        add(new JScrollPane(outer));
+
         setVisible(true);
     }
 
-    void addRow(JPanel p,GridBagConstraints c,int y,String label,Component comp){
-        c.gridx=0;c.gridy=y;
-        p.add(new JLabel(label),c);
-        c.gridx=1;
-        p.add(comp,c);
+    void addRow(String label, Component comp){
+        c.gridx = 0;
+        c.gridy = y;
+        c.gridwidth = 1;
+        form.add(new JLabel(label), c);
+
+        c.gridx = 1;
+        form.add(comp, c);
+
+        y++;
     }
 
-    void showPortfolio(){
+    void generatePDF() {
+        try {
+            JFileChooser chooser = new JFileChooser();
 
-        if(firstName.getText().isEmpty()){
-            JOptionPane.showMessageDialog(this,"Enter Name");
-            return;
-        }
+            if(chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION){
 
-        ArrayList<String> skillsList=new ArrayList<>();
-        if(java.isSelected()) skillsList.add("Java");
-        if(python.isSelected()) skillsList.add("Python");
+                String path = chooser.getSelectedFile().getAbsolutePath();
+                if(!path.endsWith(".pdf")) path += ".pdf";
 
-        JFrame view=new JFrame("Portfolio");
-        view.setSize(900,700);
-        view.setLocationRelativeTo(null);
+                Document doc = new Document();
+                PdfWriter.getInstance(doc, new FileOutputStream(path));
+                doc.open();
 
-        JPanel root=new JPanel(new GridBagLayout());
-        root.setBackground(bg);
+                com.itextpdf.text.Font nameFont =
+                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20);
+                com.itextpdf.text.Font headingFont =
+                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
+                com.itextpdf.text.Font normalFont =
+                        FontFactory.getFont(FontFactory.HELVETICA, 12);
 
-        JPanel card=new JPanel();
-        card.setLayout(new BoxLayout(card,BoxLayout.Y_AXIS));
-        card.setBackground(Color.WHITE);
-        card.setPreferredSize(new Dimension(500,600));
-        card.setBorder(BorderFactory.createEmptyBorder(30,40,30,40));
+                // ✅ PHOTO IN PDF
+                if(photoFile != null){
+                   com.itextpdf.text.Image img =
+        com.itextpdf.text.Image.getInstance(photoFile.getAbsolutePath());
+                    img.scaleToFit(100, 100);
+                    img.setAlignment(Element.ALIGN_CENTER);
+                    doc.add(img);
+                }
 
-        // ✅ FIXED IMAGE (no conflict)
-        if(photoFile!=null){
-            Image img=new ImageIcon(photoFile.getAbsolutePath())
-                    .getImage().getScaledInstance(120,120,Image.SCALE_SMOOTH);
-            JLabel pic=new JLabel(new ImageIcon(img));
-            pic.setAlignmentX(Component.CENTER_ALIGNMENT);
-            card.add(pic);
-        }
+                // NAME
+                Paragraph name = new Paragraph(firstName.getText()+" "+lastName.getText(), nameFont);
+                name.setAlignment(Element.ALIGN_CENTER);
+                doc.add(name);
 
-        // ✅ FIXED FONT
-        JLabel name=new JLabel(firstName.getText()+" "+lastName.getText());
-        name.setFont(new Font("Segoe UI",Font.BOLD,28));
-        name.setAlignmentX(Component.CENTER_ALIGNMENT);
+                // CONTACT
+                Paragraph contact = new Paragraph("+91 "+phone.getText()+" | "+email.getText(), normalFont);
+                contact.setAlignment(Element.ALIGN_CENTER);
+                doc.add(contact);
 
-        card.add(name);
-        card.add(Box.createVerticalStrut(20));
+                // ADDRESS
+                Paragraph addr = new Paragraph(location.getText(), normalFont);
+                addr.setAlignment(Element.ALIGN_CENTER);
+                doc.add(addr);
 
-        card.add(section("👤 Info",
-                "Age: "+age.getText(),
-                "Email: "+email.getText()));
+                doc.add(new Paragraph("\n                              \n"));
+                doc.add(new Paragraph("\n                              \n"));
 
-        card.add(section("💻 Skills",
-                String.join(", ",skillsList)));
+                // PERSONAL INFO
+                doc.add(new Paragraph("PERSONAL INFO", headingFont));
+                doc.add(new Paragraph("Age: "+age.getText(), normalFont));
+                doc.add(new Paragraph("Gender: "+genderBox.getSelectedItem(), normalFont));
+                doc.add(new Paragraph("Qualification: "+qualificationBox.getSelectedItem(), normalFont));
 
-        card.add(section("🎯 Hobbies",
-                hobbies.getText()));
+                doc.add(new Paragraph("\n----------------------------------------\n"));
 
-        JButton pdfBtn=new JButton("Export PDF");
-        pdfBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        pdfBtn.addActionListener(e -> generatePDF(skillsList));
+                // EDUCATION
+                doc.add(new Paragraph("EDUCATION", headingFont));
+                for(JTextField f : educationFields){
+                    if(!f.getText().isEmpty())
+                        doc.add(new Paragraph("• "+f.getText(), normalFont));
+                }
 
-        card.add(Box.createVerticalStrut(20));
-        card.agitdd(pdfBtn);
+                doc.add(new Paragraph("\n----------------------------------------\n"));
 
-        root.add(card);
-        view.add(root);
-        view.setVisible(true);
-    }
+                // PROJECTS
+                doc.add(new Paragraph("PROJECTS", headingFont));
+                for(JTextField f : projectFields){
+                    if(!f.getText().isEmpty())
+                        doc.add(new Paragraph("• "+f.getText(), normalFont));
+                }
 
-    JPanel section(String title,String... lines){
+                doc.add(new Paragraph("\n----------------------------------------\n"));
 
-        JPanel p=new JPanel();
-        p.setLayout(new BoxLayout(p,BoxLayout.Y_AXIS));
-        p.setAlignmentX(Component.LEFT_ALIGNMENT);
+                // SKILLS
+                doc.add(new Paragraph("SKILLS", headingFont));
+                for(JTextField f : skillsFields){
+                    if(!f.getText().isEmpty())
+                        doc.add(new Paragraph("• "+f.getText(), normalFont));
+                }
 
-        JLabel t=new JLabel(title);
-        t.setFont(new Font("Segoe UI",Font.BOLD,18)); // ✅ FIXED
-        t.setForeground(new Color(0,120,215));
+                doc.close();
 
-        p.add(t);
+                JOptionPane.showMessageDialog(this,"PDF Saved Successfully!");
+            }
 
-        for(String s:lines){
-            p.add(new JLabel(s));
-        }
-
-        p.add(Box.createVerticalStrut(10));
-        return p;
-    }
-
-    void generatePDF(ArrayList<String> skillsList){
-        try{
-            Document doc=new Document();
-            PdfWriter.getInstance(doc,new FileOutputStream("portfolio.pdf"));
-
-            doc.open();
-
-            doc.add(new Paragraph("PORTFOLIO\n\n"));
-            doc.add(new Paragraph("Name: "+firstName.getText()+" "+lastName.getText()));
-            doc.add(new Paragraph("Email: "+email.getText()));
-            doc.add(new Paragraph("Skills: "+String.join(", ",skillsList)));
-            doc.add(new Paragraph("Hobbies: "+hobbies.getText()));
-
-            doc.close();
-
-            JOptionPane.showMessageDialog(this,"PDF Created!");
-
-        }catch(Exception e){
-            e.printStackTrace();
+        } catch(Exception ex){
+            ex.printStackTrace();
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args){
         new PortfolioBuilder();
     }
 }
